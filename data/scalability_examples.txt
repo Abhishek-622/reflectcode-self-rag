@@ -1,0 +1,139 @@
+
+# Scalability and Performance Examples in Python
+
+This file contains examples of performance issues, memory bottlenecks, and scalable patterns in Python.
+
+---
+
+## 1. CPU-bound vs IO-bound
+
+```python
+import time
+import asyncio
+
+# CPU-bound task
+def cpu_task(n):
+    s = 0
+    for i in range(n):
+        s += i ** 2
+    return s
+
+# IO-bound task
+async def io_task(n):
+    await asyncio.sleep(0.1)
+    return n
+
+# Demonstrate async advantage
+async def main():
+    tasks = [io_task(i) for i in range(5)]
+    results = await asyncio.gather(*tasks)
+    print("IO results:", results)
+
+start = time.time()
+cpu_task(1000000)  # Blocking CPU task
+print("CPU task took:", time.time() - start)
+asyncio.run(main())
+```
+
+---
+
+## 2. Memory Bottleneck
+
+```python
+# Example: accumulating large lists unnecessarily
+def memory_leak(n):
+    cache = []
+    for i in range(n):
+        temp = [j for j in range(1000)]
+        cache.append(temp)  # Accumulates memory
+    print("Cache size:", len(cache))
+
+memory_leak(5000)
+```
+
+Fix: Avoid storing intermediate results if not needed.
+
+---
+
+## 3. Multithreading vs Multiprocessing
+
+```python
+import threading
+import multiprocessing
+
+def compute(n):
+    s = sum(i*i for i in range(n))
+    return s
+
+# Multithreading (Python GIL limits CPU-bound tasks)
+threads = [threading.Thread(target=compute, args=(1000000,)) for _ in range(4)]
+for t in threads: t.start()
+for t in threads: t.join()
+
+# Multiprocessing (bypasses GIL)
+processes = [multiprocessing.Process(target=compute, args=(1000000,)) for _ in range(4)]
+for p in processes: p.start()
+for p in processes: p.join()
+```
+
+---
+
+## 4. Profiling Slow Code
+
+```python
+import cProfile
+
+def slow_function():
+    total = 0
+    for i in range(100000):
+        for j in range(100):
+            total += i*j
+    return total
+
+cProfile.run('slow_function()')
+```
+
+Use `cProfile` to identify bottlenecks before optimizing.
+
+---
+
+## 5. Async Scaling with asyncio.gather
+
+```python
+import asyncio
+
+async def fetch_data(x):
+    await asyncio.sleep(0.1)
+    return x*2
+
+async def main():
+    tasks = [fetch_data(i) for i in range(100)]
+    results = await asyncio.gather(*tasks)
+    print("Fetched", len(results), "items")
+
+asyncio.run(main())
+```
+
+Shows how to scale hundreds of concurrent tasks efficiently.
+
+---
+
+## 6. Using Generators to Save Memory
+
+```python
+# Avoid creating large lists
+def big_range(n):
+    for i in range(n):
+        yield i**2
+
+total = sum(big_range(1000000))
+print("Sum:", total)
+```
+
+Generators save memory by producing items on-the-fly.
+
+---
+
+## 7. Summary
+
+These examples demonstrate common bottlenecks and scalable patterns in Python. They’re suitable for ingestion into a RAG system.

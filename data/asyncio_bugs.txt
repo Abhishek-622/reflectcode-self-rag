@@ -1,0 +1,159 @@
+
+# Asyncio Bugs and Common Pitfalls
+
+This file contains detailed examples of common asyncio bugs in Python and how to debug or fix them.
+
+---
+
+## 1. Missing await
+
+```python
+import asyncio
+
+async def slow_increment(x):
+    await asyncio.sleep(1)
+    return x + 1
+
+async def main():
+    coros = [slow_increment(i) for i in range(3)]
+    results = coros  # BUG: forgot await
+    print("Results without await:", results)  # Prints coroutine objects
+
+    # Correct usage
+    results_correct = await asyncio.gather(*coros)
+    print("Correct results:", results_correct)
+
+asyncio.run(main())
+```
+
+Explanation: Forgetting to `await` async functions leads to coroutine objects being printed instead of actual results.
+
+---
+
+## 2. Race Condition
+
+```python
+import asyncio
+
+counter = 0
+
+async def increment():
+    global counter
+    temp = counter
+    await asyncio.sleep(0.1)
+    counter = temp + 1
+
+async def main():
+    tasks = [increment() for _ in range(10)]
+    await asyncio.gather(*tasks)
+    print("Final counter:", counter)  # Often less than 10 due to race
+
+asyncio.run(main())
+```
+
+Fix: Use `asyncio.Lock()` to prevent race conditions.
+
+---
+
+## 3. Deadlocks
+
+```python
+import asyncio
+
+lock1 = asyncio.Lock()
+lock2 = asyncio.Lock()
+
+async def task1():
+    async with lock1:
+        await asyncio.sleep(0.1)
+        async with lock2:  # Deadlock if task2 holds lock2 first
+            print("Task1 done")
+
+async def task2():
+    async with lock2:
+        await asyncio.sleep(0.1)
+        async with lock1:
+            print("Task2 done")
+
+async def main():
+    await asyncio.gather(task1(), task2())  # May hang
+
+# asyncio.run(main())  # Warning: Can deadlock
+```
+
+Explanation: Always acquire locks in consistent order to avoid deadlocks.
+
+---
+
+## 4. Forgetting async in loops
+
+```python
+import asyncio
+
+async def print_number(n):
+    await asyncio.sleep(0.1)
+    print(n)
+
+async def main():
+    for i in range(5):
+        print_number(i)  # Missing await
+    await asyncio.sleep(1)
+
+asyncio.run(main())
+```
+
+Fix: `await print_number(i)` or use `asyncio.gather` for concurrent execution.
+
+---
+
+## 5. Debugging Async Code
+
+```python
+import asyncio
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+async def slow_task(x):
+    logging.debug(f"Starting task {x}")
+    await asyncio.sleep(0.5)
+    logging.debug(f"Finished task {x}")
+    return x * 2
+
+async def main():
+    tasks = [slow_task(i) for i in range(3)]
+    results = await asyncio.gather(*tasks)
+    print("Results:", results)
+
+asyncio.run(main())
+```
+
+Use logging to inspect execution flow and spot missed awaits, race conditions, or deadlocks.
+
+---
+
+## 6. Exception Handling in Async Tasks
+
+```python
+import asyncio
+
+async def might_fail(x):
+    if x % 2 == 0:
+        raise ValueError(f"Even number {x} is not allowed")
+    return x
+
+async def main():
+    tasks = [might_fail(i) for i in range(5)]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    print("Results with exceptions:", results)
+
+asyncio.run(main())
+```
+
+Explanation: Use `return_exceptions=True` in `gather` to prevent one failing task from canceling all others.
+
+---
+
+## 7. Summary
+
+This file demonstrates typical async bugs and provides patterns for debugging and fixing them. It’s ready for ingestion into a RAG system.

@@ -1,0 +1,218 @@
+
+# Python Debugging and Overfitting Examples
+
+This document contains short, self-contained examples demonstrating debugging techniques, error handling, asynchronous bugs, and overfitting in machine learning.
+
+---
+
+## 1. Try/Except Debugging Example
+
+```python
+# Example 1: Basic try/except debugging
+def divide(a, b):
+    try:
+        result = a / b
+    except ZeroDivisionError:
+        print("Error: Division by zero occurred.")
+        result = None
+    except TypeError:
+        print("Error: Invalid data type for division.")
+        result = None
+    else:
+        print("Division successful!")
+    finally:
+        print(f"Inputs were a={a}, b={b}")
+    return result
+
+print(divide(10, 2))
+print(divide(5, 0))
+print(divide(10, 'a'))
+```
+
+---
+
+## 2. Using `pdb` for Step-by-Step Debugging
+
+```python
+# Example 2: Interactive debugging with pdb
+import pdb
+
+def buggy_sum(numbers):
+    total = 0
+    for n in numbers:
+        pdb.set_trace()  # Pause execution to inspect variables
+        total += n
+    return total
+
+print(buggy_sum([1, 2, 3]))
+```
+
+You can run this script in a terminal and use commands like:
+- `n` (next step)
+- `c` (continue execution)
+- `p variable_name` (print variable value)
+
+---
+
+## 3. Async Bug (Forgotten Await)
+
+```python
+# Example 3: Async function bug caused by missing await
+import asyncio
+
+async def slow_increment(x):
+    await asyncio.sleep(1)
+    return x + 1
+
+async def main():
+    coroutines = [slow_increment(i) for i in range(3)]
+    print(coroutines)  # These are coroutine objects, not results
+
+    # Incorrect: printing coroutine objects instead of awaited results
+    print("Incorrect Results:", coroutines)
+
+    # Correct way
+    results = await asyncio.gather(*coroutines)
+    print("Correct Results:", results)
+
+asyncio.run(main())
+```
+
+---
+
+## 4. Logging for Debugging
+
+```python
+# Example 4: Using logging instead of print for debugging
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
+
+def compute_sum(values):
+    logging.info(f"Received values: {values}")
+    total = 0
+    for v in values:
+        if not isinstance(v, (int, float)):
+            logging.error(f"Invalid type: {type(v)} for value {v}")
+            continue
+        total += v
+    logging.debug(f"Final sum: {total}")
+    return total
+
+compute_sum([1, 2, 'a', 3])
+```
+
+---
+
+## 5. Overfitting Example in Machine Learning
+
+```python
+# Example 5: Overfitting with Polynomial Regression
+import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import r2_score
+import numpy as np
+
+# Generate synthetic data
+np.random.seed(0)
+X = np.linspace(0, 5, 20).reshape(-1, 1)
+y = 2 * X.squeeze() + 1 + np.random.randn(20) * 1.5
+
+# Fit a high-degree polynomial (causes overfitting)
+poly = PolynomialFeatures(degree=10)
+X_poly = poly.fit_transform(X)
+model = LinearRegression().fit(X_poly, y)
+y_pred = model.predict(X_poly)
+
+# Visualize
+plt.scatter(X, y, color="blue", label="Actual data")
+plt.plot(X, y_pred, color="red", label="Overfitted model")
+plt.legend()
+plt.title("Overfitting Example (Degree 10 Polynomial)")
+plt.show()
+
+print("R² on training data:", r2_score(y, y_pred))
+```
+
+---
+
+## 6. Handling Unexpected Errors Gracefully
+
+```python
+# Example 6: Catching and logging unexpected exceptions
+import traceback
+
+def risky_operation(a, b):
+    try:
+        return a / b
+    except Exception as e:
+        print("An unexpected error occurred:", e)
+        traceback.print_exc()
+
+risky_operation(10, 0)
+risky_operation("x", 5)
+```
+
+---
+
+## 7. Detecting Logic Bugs with Assertions
+
+```python
+# Example 7: Using assertions to detect logic errors
+def normalize(values):
+    total = sum(values)
+    assert total != 0, "Sum of values should not be zero!"
+    return [v / total for v in values]
+
+print(normalize([1, 2, 3]))
+print(normalize([0, 0, 0]))  # Will trigger AssertionError
+```
+
+---
+
+## 8. Example of Memory Leak in Loops
+
+```python
+# Example 8: Demonstrating potential memory leak (logical bug)
+def memory_leak_demo(n):
+    cache = []
+    for i in range(n):
+        data = [j for j in range(1000)]  # Temporary list
+        cache.append(data)  # Accumulating references
+    print(f"Cache size: {len(cache)}")
+
+memory_leak_demo(5000)
+```
+
+---
+
+## 9. Async Race Condition Example
+
+```python
+# Example 9: Async race condition due to shared variable
+import asyncio
+
+counter = 0
+
+async def increment():
+    global counter
+    temp = counter
+    await asyncio.sleep(0.1)
+    counter = temp + 1
+
+async def main():
+    tasks = [increment() for _ in range(100)]
+    await asyncio.gather(*tasks)
+    print("Final counter value:", counter)
+
+asyncio.run(main())
+```
+
+(You’ll notice the counter is often less than 100, showing race condition)
+
+---
+
+## 10. Summary
+
+This document is useful for RAG (Retrieval-Augmented Generation) systems because it contains real, diverse code snippets that illustrate debugging patterns, exception handling, and ML issues like overfitting.

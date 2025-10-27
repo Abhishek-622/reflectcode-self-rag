@@ -1,0 +1,8 @@
+# Secrets
+.env
+
+# Generated/Volatile
+chroma_db/
+__pycache__/
+env/
+.gradio

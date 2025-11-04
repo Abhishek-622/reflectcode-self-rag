@@ -1,6 +1,6 @@
 # 🤖 ReflectAI: Self-Reflective Retrieval-Augmented Generation (Self-RAG)
 
-[![Hugging Face Space](https://huggingface.co/spaces/abhikur420/reflectai-self-rag)
+[![Hugging Face Space](https://img.shields.io/badge/Hugging%20Face-Space-blue?logo=huggingface)](https://huggingface.co/spaces/abhikur420/reflectai-self-rag)
 
 **ReflectAI** is an open-source Self-RAG application that builds a reflective AI agent for code debugging, technical explanations, and interview preparation. Using a multi-step pipeline, it retrieves relevant context from a local knowledge base, generates responses with Groq's Llama 3.3, *critiques its own output* for accuracy and relevance, and iteratively refines until optimal.
 
